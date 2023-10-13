@@ -1,0 +1,57 @@
+version: "3"
+services:
+  restaurant:
+    build:
+      context: ./
+      dockerfile: ./apps/kitchen/Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/usr/src/app 
+      - /usr/src/app/node_modules
+    command: pnpm run start:dev restaurant
+
+  kitchen:
+    build:
+      context: ./
+      dockerfile: ./apps/restaurant/Dockerfile
+    depends_on:
+      - rabbitmq
+      - postgres
+    volumes:
+      - .:/usr/src/app # any change to base folder should be reflected
+      - /usr/src/app/node_modules
+    command: pnpm run start:dev kitchen
+
+  storage:
+    build:
+      context: ./
+      dockerfile: ./apps/storage/Dockerfile
+    depends_on:
+      - rabbitmq
+      - postgres
+    volumes:
+      - .:/usr/src/app # any change to base folder should be reflected
+      - /usr/src/app/node_modules
+    command: pnpm run start:dev storage
+
+  rabbitmq:
+    image: "rabbitmq:management-alpine"
+    container_name: rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672" # Web management console
+    env_file:
+      - .env
+
+  postgres:
+    image: "postgres:latest"
+    env_file:
+      - ./.env
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+  
+ 
